@@ -13,6 +13,15 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.support.v4.app.ActivityCompat
+import android.widget.Toast
+import android.content.pm.PackageManager
+import android.location.Location
+import android.support.v4.content.ContextCompat
+import android.location.LocationManager
+import android.location.LocationListener
+import android.util.Log
 
 
 /**
@@ -31,10 +40,10 @@ class ContactFragment : Fragment(), OnMapReadyCallback {
         mMap = googleMap
 
         // Add a marker in Sydney and move the camera
-        val sydney = LatLng(18.813722, 98.992220)
-        mMap.addMarker(MarkerOptions().position(sydney).title("ที่ทำงาน"))
+        val addr = LatLng(18.813722, 98.992220)
+        mMap.addMarker(MarkerOptions().position(addr).title("ที่ทำงาน"))
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 16.0f));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(addr, 16.0f));
     }
     // TODO: Rename and change types of parameters
     private var mParam1: String? = null
@@ -62,6 +71,36 @@ class ContactFragment : Fragment(), OnMapReadyCallback {
 
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
+        if (!checkPermission()) {
+
+            requestPermission();
+
+        } else {
+            val locationManager = context!!.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+// Define a listener that responds to location updates
+            val locationListener = object : LocationListener {
+                override fun onLocationChanged(location: Location) {
+                    // Called when a new location is found by the network location provider.
+                    //makeUseOfNewLocation(location)
+                    Log.i("xxx","la:"+location.latitude+",la:"+location.longitude)
+
+
+
+                }
+
+                override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
+
+                override fun onProviderEnabled(provider: String) {}
+
+                override fun onProviderDisabled(provider: String) {}
+            }
+
+// Register the listener with the Location Manager to receive location updates
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0f, locationListener)
+
+        }
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -123,4 +162,34 @@ class ContactFragment : Fragment(), OnMapReadyCallback {
             return fragment
         }
     }
+
+
+    private fun checkPermission(): Boolean {
+        val result = ContextCompat.checkSelfPermission(context!!, android.Manifest.permission.ACCESS_FINE_LOCATION)
+        return if (result == PackageManager.PERMISSION_GRANTED) {
+
+            true
+
+        } else {
+
+            false
+
+        }
+    }
+
+    private fun requestPermission() {
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(activity!!, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
+
+            Toast.makeText(context, "GPS permission allows us to access location data. Please allow in App Settings for additional functionality.", Toast.LENGTH_LONG).show()
+
+        } else {
+
+            ActivityCompat.requestPermissions(activity!!, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1000)
+        }
+    }
+
 }// Required empty public constructor
+
+
+
